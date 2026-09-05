@@ -4,7 +4,7 @@ Where the pane is, what branch it is on, and what a chord would do — the row u
 you are typing in [Crook](https://github.com/theguriev/crook), as a plugin Crook does not
 carry.
 
-![the row of chips, and the directory picker one of them opens](assets/chips.png)
+![the row of chips under the line being typed](assets/chips.png)
 
 Four things, each of them a chip:
 
@@ -18,6 +18,13 @@ Four things, each of them a chip:
 
 Where a program has taken the screen — an agent, `vim`, `top` — the row floats over the
 pane's bottom corner instead, which is where Warp puts it and where it is out of the way.
+
+| | |
+|---|---|
+| ![the directory picker](assets/directories.png) | ![the branch picker](assets/branches.png) |
+
+Both panels are Crook's own: a field, a filtered list, arrows, Enter and Escape. This plugin
+supplies the rows and is told which one was chosen.
 
 ## What it is allowed to do
 
