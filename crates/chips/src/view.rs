@@ -33,7 +33,7 @@ pub fn chip(chips: &Chips, entry: &str) -> Node {
 
 /// Where the pane is, and the directories it could be in instead.
 fn directory(chips: &Chips) -> Node {
-    let Some(directory) = chips.facts.directory.as_deref() else {
+    let Some(directory) = chips.directory() else {
         // A pane whose shell has not said where it is. Nothing rather than a
         // chip saying nothing: the row is a list, and an empty contribution
         // takes no room in it.
@@ -55,7 +55,7 @@ fn directory(chips: &Chips) -> Node {
         content: Box::new(Node::Pressable {
             content: Box::new(Node::Chip {
                 icon: String::from("folder"),
-                text: shorten(directory, chips.facts.home.as_deref()),
+                text: shorten(directory, chips.home.as_deref()),
                 tone: Tone::Primary,
             }),
             action: String::from("open-directory"),
@@ -89,7 +89,7 @@ fn directories(chips: &Chips) -> Vec<Row> {
 
 /// Which branch the pane is on, and the ones it could be on instead.
 fn branch(chips: &Chips) -> Node {
-    let Some(branch) = chips.facts.branch.as_deref() else {
+    let Some(branch) = chips.branch() else {
         return Node::Empty;
     };
 
@@ -140,8 +140,8 @@ fn branches(chips: &Chips) -> Vec<Row> {
 
 /// How much has changed in the working tree, when anything has.
 fn diff(chips: &Chips) -> Node {
-    let (added, removed) = (chips.facts.added, chips.facts.removed);
-    if chips.facts.branch.is_none() || (added == 0 && removed == 0) {
+    let (added, removed) = (chips.added, chips.removed);
+    if chips.branch().is_none() || (added == 0 && removed == 0) {
         // Warp prints `± 0` and Crook does not: a chip that is always there
         // saying nothing changed is a chip the eye stops reading, and this row
         // is next to the line somebody is typing.

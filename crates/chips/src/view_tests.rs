@@ -1,19 +1,18 @@
 //! What the chips describe, given what they know.
 
-use crook_plugin_api::{Command, Entry, Facts};
+use crook_plugin_api::{Command, Entry, Place};
 
 use super::*;
 
 /// A plugin that knows where it is.
 fn somewhere() -> Chips {
     let mut chips = Chips::new();
-    chips.facts = Facts {
-        directory: Some(String::from("/home/eugen/Work/crook")),
+    chips.place = Some(Place {
+        directory: String::from("/home/eugen/Work/crook"),
         branch: Some(String::from("main")),
-        home: Some(String::from("/home/eugen")),
-        added: 0,
-        removed: 0,
-    };
+        worktree: false,
+    });
+    chips.home = Some(String::from("/home/eugen"));
     chips
 }
 
@@ -99,8 +98,8 @@ fn the_diff_chip_is_absent_until_something_has_changed() {
     let mut chips = somewhere();
     assert_eq!(chip(&chips, "diff"), Node::Empty);
 
-    chips.facts.added = 12;
-    chips.facts.removed = 3;
+    chips.added = 12;
+    chips.removed = 3;
 
     assert_eq!(
         chip(&chips, "diff"),

@@ -51,6 +51,9 @@ on a timer, never while nobody is looking.
 **It cannot change a keybinding.** It asks Crook to, by name, and Crook puts up its own
 recorder.
 
+**Needs a Crook that speaks plugin API 6.** An older one refuses this by number, at load, with
+a line saying which version each side speaks.
+
 ## Installing
 
 ```sh

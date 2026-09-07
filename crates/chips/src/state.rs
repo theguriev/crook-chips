@@ -13,7 +13,7 @@
 //! only things kept between frames are the ones the host has no idea about —
 //! which panel is open, and what was in the directory it is showing.
 
-use crook_plugin_api::{Answer, Command, Entry, Facts, Request};
+use crook_plugin_api::{Answer, Command, Entry, Place, Request};
 
 use crate::sys::{self, Level};
 
@@ -86,7 +86,12 @@ enum Asked {
 #[derive(Debug, Default)]
 pub struct Chips {
     /// Where the focused pane is, as the host last answered.
-    pub facts: Facts,
+    pub place: Option<Place>,
+    /// The person's home directory, for printing a path as `~/…`.
+    pub home: Option<String>,
+    /// How much has changed in the working tree.
+    pub added: u32,
+    pub removed: u32,
     /// Which panel is up.
     pub panel: Panel,
     /// The directory the picker is showing, and what is in it.
@@ -159,7 +164,7 @@ impl Chips {
         match action {
             "open-directory" => {
                 self.panel = Panel::Directory;
-                self.browsing = self.facts.directory.clone().unwrap_or_default();
+                self.browsing = self.directory().unwrap_or_default().to_owned();
                 self.entries.clear();
                 let path = self.browsing.clone();
                 self.ask(Asked::List, Request::List { path });
@@ -167,7 +172,7 @@ impl Chips {
             "open-branch" => {
                 self.panel = Panel::Branch;
                 self.branches.clear();
-                if let Some(path) = self.facts.directory.clone() {
+                if let Some(path) = self.directory().map(str::to_owned) {
                     self.ask(Asked::Repository, Request::Repository { path });
                 }
             }
@@ -230,13 +235,25 @@ impl Chips {
         let (_, asked) = self.waiting.remove(at);
 
         match (asked, answer) {
-            (Asked::Where, Answer::Where(facts)) => {
+            (
+                Asked::Where,
+                Answer::Where {
+                    place,
+                    home,
+                    added,
+                    removed,
+                },
+            ) => {
                 // The directory moved out from under the panel: what it is
                 // showing is about a directory nobody is in any more.
-                if self.panel == Panel::Directory && self.facts.directory != facts.directory {
+                let directory = place.as_ref().map(|place| place.directory.clone());
+                if self.panel == Panel::Directory && self.directory() != directory.as_deref() {
                     self.panel = Panel::None;
                 }
-                self.facts = facts;
+                self.place = place;
+                self.home = home;
+                self.added = added;
+                self.removed = removed;
             }
             (Asked::List, Answer::Listed(entries)) => {
                 // Directories only. A picker that cds is a picker whose rows
@@ -264,6 +281,18 @@ impl Chips {
                 &format!("{asked:?} was answered with something else: {answer:?}"),
             ),
         }
+    }
+
+    /// Where the pane is, or `None` before it has said.
+    pub fn directory(&self) -> Option<&str> {
+        self.place.as_ref().map(|place| place.directory.as_str())
+    }
+
+    /// Which branch it is on, when the directory is in a repository.
+    pub fn branch(&self) -> Option<&str> {
+        self.place
+            .as_ref()
+            .and_then(|place| place.branch.as_deref())
     }
 
     /// What the chip that prints a chord should say, if the host has told us.

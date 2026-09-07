@@ -31,7 +31,9 @@
 
 use std::cell::UnsafeCell;
 
-use crook_plugin_api::{ABI_VERSION, Answer, Capability, Manifest, Node, from_bytes, to_bytes};
+use crook_plugin_api::{
+    ABI_VERSION, Answer, Capability, Manifest, Node, Render, from_bytes, to_bytes,
+};
 
 pub mod state;
 pub mod sys;
@@ -167,16 +169,20 @@ pub extern "C" fn crook_build() -> i32 {
 }
 
 /// What to draw for one of this plugin's contributions.
+///
+/// The host says which slot and which of this plugin's own entries it is
+/// asking about — a row of chips is four contributions to one slot, and a
+/// render told only the slot would have to draw all four in each of them.
 #[unsafe(no_mangle)]
-pub extern "C" fn crook_render(slot: i32, slot_len: i32, entry: i32, entry_len: i32) -> i64 {
-    // SAFETY: the host allocated and wrote both of these before calling in.
-    let slot = unsafe { take(slot, slot_len) };
-    let entry = unsafe { take(entry, entry_len) };
+pub extern "C" fn crook_render(bytes: i32, length: i32) -> i64 {
+    // SAFETY: the host allocated and wrote this before calling in.
+    let bytes = unsafe { take(bytes, length) };
 
-    let tree = match (std::str::from_utf8(&slot), std::str::from_utf8(&entry)) {
-        (Ok(state::SLOT), Ok(entry)) => view::chip(chips(), entry),
-        // A slot this plugin does not contribute to, which cannot happen and
-        // is drawn as nothing rather than guessed at.
+    let tree = match from_bytes::<Render>(&bytes) {
+        Ok(render) if render.slot == state::SLOT => view::chip(chips(), &render.entry),
+        // A slot this plugin does not contribute to, which cannot happen, and
+        // a render this build cannot read, which means the host speaks a
+        // version this one does not. Both draw nothing rather than a guess.
         _ => Node::Empty,
     };
     hand_back(to_bytes(&tree).unwrap_or_default())
@@ -233,7 +239,7 @@ mod tests {
         assert_eq!(
             sentences,
             vec![
-                String::from("See which project the active pane is in"),
+                String::from("See which project each tab is in"),
                 String::from("See the names of the files in ~"),
                 String::from("Type into your shell, and run: cd …, git switch …"),
                 String::from("See what Crook can be asked to do, and the keys for it"),

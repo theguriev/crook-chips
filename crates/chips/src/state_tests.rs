@@ -5,10 +5,19 @@
 //! state machine, which is the only part of a plugin that can be wrong in a
 //! way a person would notice.
 
-use crook_plugin_api::{Command, Entry, Facts, Request};
+use crook_plugin_api::{Command, Entry, Place, Request};
 
 use super::*;
 use crate::sys::stub;
+
+/// The directory these tests pretend the pane is in.
+fn somewhere() -> Place {
+    Place {
+        directory: String::from("/home/eugen/Work/crook"),
+        branch: None,
+        worktree: false,
+    }
+}
 
 /// A plugin that has been built, with everything it asked for thrown away.
 ///
@@ -59,10 +68,7 @@ fn building_registers_the_four_chips_and_asks_where_it_is() {
 #[test]
 fn opening_the_directory_picker_lists_the_directory_the_pane_is_in() {
     let mut chips = built();
-    chips.facts = Facts {
-        directory: Some(String::from("/home/eugen/Work/crook")),
-        ..Facts::default()
-    };
+    chips.place = Some(somewhere());
 
     chips.run("open-directory", "");
 
@@ -127,11 +133,10 @@ fn choosing_a_directory_types_a_cd_and_shuts_the_panel() {
 #[test]
 fn choosing_a_branch_switches_to_it() {
     let mut chips = built();
-    chips.facts = Facts {
-        directory: Some(String::from("/home/eugen/Work/crook")),
+    chips.place = Some(Place {
         branch: Some(String::from("main")),
-        ..Facts::default()
-    };
+        ..somewhere()
+    });
     chips.run("open-branch", "");
     let _ = stub::taken();
 
@@ -217,20 +222,23 @@ fn the_panel_shuts_when_the_pane_moves_out_from_under_it() {
     // A `cd` in the shell while the picker is open leaves it listing a
     // directory nobody is in. Warp's chooser does the same thing.
     let mut chips = built();
-    chips.facts = Facts {
-        directory: Some(String::from("/home/eugen/Work/crook")),
-        ..Facts::default()
-    };
+    chips.place = Some(somewhere());
     chips.run("open-directory", "");
     let _ = stub::taken();
 
     chips.tick();
     answer(
         &mut chips,
-        Answer::Where(Facts {
-            directory: Some(String::from("/home/eugen/Work")),
-            ..Facts::default()
-        }),
+        Answer::Where {
+            place: Some(Place {
+                directory: String::from("/home/eugen/Work"),
+                branch: None,
+                worktree: false,
+            }),
+            home: None,
+            added: 0,
+            removed: 0,
+        },
     );
 
     assert_eq!(chips.panel, Panel::None);
