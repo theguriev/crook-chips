@@ -1,4 +1,7 @@
 [toolchain]
 channel = "1.92.0"
 components = ["rustfmt", "clippy"]
+# The target the plugin is: `rustup show` installs it, so neither CI nor a
+# contributor has to ask for it by name — every other plugin says the same.
+targets = ["wasm32-unknown-unknown"]
 profile = "minimal"

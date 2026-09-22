@@ -83,6 +83,30 @@ plugin anybody can build cannot depend on a repository they cannot clone. `ABI_V
 the two honest: a copy that has drifted is a plugin the host refuses by number, at load, with
 a line saying which version each side speaks.
 
+## Releasing
+
+A release is a tag, and the tag is cut by a script:
+
+```sh
+./script/release 0.2.1 --push
+```
+
+It sets the version in `Cargo.toml`, writes the `## v0.2.1` section of `CHANGELOG.md`
+from the commit titles since the previous tag with
+[changelogen](https://github.com/unjs/changelogen), commits both as `chore(release):
+v0.2.1`, tags it and pushes. `ci.yml` builds `plugin.wasm` from that tag and puts it on a
+release page whose notes are that same section — written once, not once for the file and
+again for the page. `--dry-run` prints the section and stops; `--push` is what starts the
+build.
+
+Which makes commit titles the release notes, so they are [Conventional
+Commits](https://www.conventionalcommits.org/en/v1.0.0/) — `feat(panel): …`, `fix: …`, the
+types listed under `types` in `changelog.config.json`. A title in any other shape is not an
+error to the generator, it is dropped without a word, so it is refused where it is still
+easy to fix: `git config core.hooksPath script/hooks` installs the hook, and `commits.yml`
+runs the same check on every pull request. The history before all this predates the convention,
+so the first release over it needs `--allow-untyped`, which says the omission is understood.
+
 ## Licence
 
 MIT. The icons it names by name are Crook's own, drawn by Crook — this plugin ships no
