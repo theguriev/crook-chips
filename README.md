@@ -51,8 +51,8 @@ on a timer, never while nobody is looking.
 **It cannot change a keybinding.** It asks Crook to, by name, and Crook puts up its own
 recorder.
 
-**Needs a Crook that speaks plugin API 6.** An older one refuses this by number, at load, with
-a line saying which version each side speaks.
+**Needs a Crook that speaks plugin API 8.** One that speaks any other number — older or newer —
+refuses this by number, at load, with a line saying which version each side speaks.
 
 ## Installing
 
@@ -78,10 +78,11 @@ has; off wasm they are stubs that record what was asked for, which is what lets 
 machine in `state.rs` and the tree in `view.rs` be tested by `cargo test` rather than by
 installing a plugin and squinting at a terminal.
 
-`crates/crook_plugin_api` is a **copy** of that crate from Crook itself, vendored because a
-plugin anybody can build cannot depend on a repository they cannot clone. `ABI_VERSION` keeps
-the two honest: a copy that has drifted is a plugin the host refuses by number, at load, with
-a line saying which version each side speaks.
+`crook_plugin_api` is the published crate from crates.io, not a copy. It is versioned
+`0.<abi>.<patch>`, so the `0.8` in `Cargo.toml` is plugin API 8, and moving this plugin to a new
+API is changing that one number. `ABI_VERSION` is compiled into the module from it, and a host
+that speaks another number refuses the plugin by number, at load, with a line saying which
+version each side speaks.
 
 ## Releasing
 
