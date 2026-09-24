@@ -77,7 +77,9 @@ fn the_branch_picker_marks_the_branch_that_is_checked_out() {
     let mut chips = somewhere();
     chips.panel = Panel::Branch;
     chips.head = Some(String::from("main"));
-    chips.branches = vec![String::from("main"), String::from("pirate-ext")];
+    // Not first: a mark that went on the first row, whichever branch was
+    // checked out, looked right while the branch that was came first.
+    chips.branches = ["pirate-ext", "main", "zeta"].map(String::from).to_vec();
 
     let Node::Anchored {
         panel: Some(panel), ..
@@ -89,8 +91,19 @@ fn the_branch_picker_marks_the_branch_that_is_checked_out() {
         panic!("the panel should be a picker");
     };
 
-    assert_eq!(rows[0].tone, Tone::Accent, "the one you are on");
-    assert_eq!(rows[1].tone, Tone::Primary);
+    let marked: Vec<(&str, &str, Tone)> = rows
+        .iter()
+        .map(|row| (row.key.as_str(), row.icon.as_str(), row.tone))
+        .collect();
+    assert_eq!(
+        marked,
+        [
+            ("pirate-ext", "git-branch", Tone::Primary),
+            ("main", "check", Tone::Accent),
+            ("zeta", "git-branch", Tone::Primary),
+        ],
+        "only the one you are on is marked"
+    );
 }
 
 #[test]
