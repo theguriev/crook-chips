@@ -83,6 +83,62 @@ fn opening_the_directory_picker_lists_the_directory_the_pane_is_in() {
 }
 
 #[test]
+fn the_branch_picker_shuts_when_the_pane_moves_to_another_directory() {
+    // Its rows are the branches of the repository it was opened in, and a
+    // row chosen after the pane has moved types `git switch` into another.
+    let mut chips = built();
+    chips.place = Some(somewhere());
+    chips.run("open-branch", "");
+    answer(
+        &mut chips,
+        Answer::Repository {
+            head: Some(String::from("main")),
+            branches: vec![String::from("main"), String::from("old-work")],
+        },
+    );
+    assert_eq!(chips.panel, Panel::Branch);
+
+    chips.tick();
+    answer(
+        &mut chips,
+        Answer::Where {
+            place: Some(Place {
+                directory: String::from("/home/eugen/Work/elsewhere"),
+                branch: Some(String::from("trunk")),
+                worktree: false,
+            }),
+            home: None,
+            added: 0,
+            removed: 0,
+        },
+    );
+
+    assert_eq!(chips.panel, Panel::None);
+}
+
+#[test]
+fn the_branch_picker_stays_up_while_the_pane_stays_put() {
+    // The poll answers every two seconds whether or not anything moved.
+    let mut chips = built();
+    chips.place = Some(somewhere());
+    chips.run("open-branch", "");
+    let _ = stub::taken();
+
+    chips.tick();
+    answer(
+        &mut chips,
+        Answer::Where {
+            place: Some(somewhere()),
+            home: None,
+            added: 0,
+            removed: 0,
+        },
+    );
+
+    assert_eq!(chips.panel, Panel::Branch);
+}
+
+#[test]
 fn a_listing_keeps_the_directories_and_drops_the_files() {
     // A picker whose rows are places you can be. A file is not one, and a row
     // that did nothing when it was chosen would be worse than no row.
