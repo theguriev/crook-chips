@@ -245,9 +245,13 @@ impl Chips {
                 },
             ) => {
                 // The directory moved out from under the panel: what it is
-                // showing is about a directory nobody is in any more.
+                // showing is about a directory nobody is in any more. The
+                // branch picker as much as the directory one — its rows are the
+                // old repository's branches, and choosing one would type a
+                // `git switch` into a repository that may have no such branch
+                // or, worse, one of the same name.
                 let directory = place.as_ref().map(|place| place.directory.clone());
-                if self.panel == Panel::Directory && self.directory() != directory.as_deref() {
+                if self.panel != Panel::None && self.directory() != directory.as_deref() {
                     self.panel = Panel::None;
                 }
                 self.place = place;
